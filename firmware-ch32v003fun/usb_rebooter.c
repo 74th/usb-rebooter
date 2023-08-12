@@ -5,19 +5,22 @@
 
 void init_rcc(void)
 {
-    RCC->APB2PCENR |= RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOC | RCC_APB2Periph_GPIOD;
+    RCC->APB2PCENR |= RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOC | RCC_APB2Periph_GPIOD | RCC_APB2Periph_AFIO;
 }
 
 void setup_uart()
 {
-    RCC->APB2PCENR |= RCC_APB2Periph_GPIOD | RCC_APB2Periph_USART1;
+    RCC->APB2PCENR |= RCC_APB2Periph_GPIOD | RCC_APB2Periph_USART1 | RCC_APB2Periph_AFIO;
+
+    GPIOD->CFGLR &= ~(0xf << (4 * 6));
+    GPIOD->CFGLR |= (GPIO_Speed_10MHz | GPIO_CNF_OUT_PP_AF) << (4 * 6);
 
     GPIOD->CFGLR &= ~(0xf << (4 * 5));
     GPIOD->CFGLR |= (GPIO_Speed_10MHz | GPIO_CNF_OUT_PP_AF) << (4 * 5);
 
     // PD6 as TX
+    AFIO->PCFR1 &= ~(1 << 2 | 1 << 21);
     AFIO->PCFR1 |= 1 << 21;
-    AFIO->PCFR1 &= ~(1 << 2);
 
     USART1->CTLR1 = USART_WordLength_8b | USART_Parity_No | USART_Mode_Tx;
     USART1->CTLR2 = USART_StopBits_1;
@@ -28,7 +31,6 @@ void setup_uart()
 }
 
 #define EN_PIN GPIOv_from_PORT_PIN(GPIO_port_C, 2)
-// #define EN_PIN GPIOv_from_PORT_PIN(GPIO_port_D, 6)
 #define FLAG_PIN GPIOv_from_PORT_PIN(GPIO_port_C, 1)
 #define LED_PIN GPIOv_from_PORT_PIN(GPIO_port_A, 2)
 
@@ -52,28 +54,24 @@ int main()
 {
     SystemInit();
     init_rcc();
-
-#ifdef FUNCONF_USE_UARTPRINTF
     setup_uart();
     printf("start\n\r");
-#endif
 
     setup_gpio();
 
     while (1)
     {
-#ifdef FUNCONF_USE_UARTPRINTF
         printf("active\n\r");
-#endif
         GPIO_digitalWrite_0(EN_PIN);
         GPIO_digitalWrite_1(LED_PIN);
 
         for (int i = 0; i < ACTIVE_SEC; i++)
+        {
+            printf("%d/%d\n\r", i, ACTIVE_SEC);
             Delay_Ms(LOOP_MS);
+        }
 
-#ifdef FUNCONF_USE_UARTPRINTF
         printf("unactive\n\r");
-#endif
         GPIO_digitalWrite_1(EN_PIN);
         GPIO_digitalWrite_0(LED_PIN);
 
