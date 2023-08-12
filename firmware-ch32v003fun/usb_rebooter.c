@@ -1,46 +1,52 @@
 #include "ch32v003fun.h"
+#include "ch32v003_GPIO_branchless.h"
 #include "usb_rebooter.h"
 #include <stdio.h>
 
-#define LOOP_MS 1000
-
 void init_rcc(void)
 {
-    RCC->CFGR0 &= ~(0x1F << 11);
-
-    RCC->APB2PCENR |= RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOC | RCC_APB2Periph_GPIOD | RCC_APB2Periph_ADC1;
-    RCC->APB1PCENR |= RCC_APB1Periph_I2C1;
+    RCC->APB2PCENR |= RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOC | RCC_APB2Periph_GPIOD;
 }
 
-void setup_uart(int uartBRR)
+void setup_uart()
 {
-    // Enable GPIOD and UART.
     RCC->APB2PCENR |= RCC_APB2Periph_GPIOD | RCC_APB2Periph_USART1;
 
-    // Push-Pull, 10MHz Output, GPIO D5, with AutoFunction
     GPIOD->CFGLR &= ~(0xf << (4 * 5));
     GPIOD->CFGLR |= (GPIO_Speed_10MHz | GPIO_CNF_OUT_PP_AF) << (4 * 5);
 
-    // 115200, 8n1.  Note if you don't specify a mode, UART remains off even when UE_Set.
+    // PD6 as TX
+    AFIO->PCFR1 |= 1 << 21;
+    AFIO->PCFR1 &= ~(1 << 2);
+
     USART1->CTLR1 = USART_WordLength_8b | USART_Parity_No | USART_Mode_Tx;
     USART1->CTLR2 = USART_StopBits_1;
     USART1->CTLR3 = USART_HardwareFlowControl_None;
 
-    USART1->BRR = uartBRR;
+    USART1->BRR = UART_BRR;
     USART1->CTLR1 |= CTLR1_UE_Set;
 }
 
-// For debug writing to the UART.
-int _write(int fd, const char *buf, int size)
+#define EN_PIN GPIOv_from_PORT_PIN(GPIO_port_C, 2)
+// #define EN_PIN GPIOv_from_PORT_PIN(GPIO_port_D, 6)
+#define FLAG_PIN GPIOv_from_PORT_PIN(GPIO_port_C, 1)
+#define LED_PIN GPIOv_from_PORT_PIN(GPIO_port_A, 2)
+
+void setup_gpio()
 {
-    for (int i = 0; i < size; i++)
-    {
-        while (!(USART1->STATR & USART_FLAG_TC))
-            ;
-        USART1->DATAR = *buf++;
-    }
-    return size;
+    GPIO_port_enable(GPIO_port_A);
+    GPIO_port_enable(GPIO_port_C);
+    GPIO_port_enable(GPIO_port_D);
+    GPIO_pinMode(FLAG_PIN, GPIO_pinMode_I_pullUp, GPIO_Speed_10MHz);
+    GPIO_pinMode(EN_PIN, GPIO_pinMode_O_pushPull, GPIO_Speed_10MHz);
+    GPIO_pinMode(LED_PIN, GPIO_pinMode_O_pushPull, GPIO_Speed_10MHz);
 }
+
+#define LOOP_MS 1000
+
+#define ACTIVE_SEC 12 * 60 * 60
+// #define ACTIVE_SEC 1
+#define INACTIVE_SEC 1
 
 int main()
 {
@@ -48,17 +54,30 @@ int main()
     init_rcc();
 
 #ifdef FUNCONF_USE_UARTPRINTF
-    printf("using ch32v003fun\r\n");
-    printf("initialize\r\n");
+    setup_uart();
+    printf("start\n\r");
 #endif
 
-#ifdef FUNCONF_USE_UARTPRINTF
-    printf("initialize done\r\n");
-#endif
+    setup_gpio();
 
     while (1)
     {
-        loop();
-        Delay_Ms(LOOP_MS);
+#ifdef FUNCONF_USE_UARTPRINTF
+        printf("active\n\r");
+#endif
+        GPIO_digitalWrite_0(EN_PIN);
+        GPIO_digitalWrite_1(LED_PIN);
+
+        for (int i = 0; i < ACTIVE_SEC; i++)
+            Delay_Ms(LOOP_MS);
+
+#ifdef FUNCONF_USE_UARTPRINTF
+        printf("unactive\n\r");
+#endif
+        GPIO_digitalWrite_1(EN_PIN);
+        GPIO_digitalWrite_0(LED_PIN);
+
+        for (int i = 0; i < INACTIVE_SEC; i++)
+            Delay_Ms(LOOP_MS);
     }
 }
