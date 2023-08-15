@@ -1787,7 +1787,7 @@
     (property "Reference" "J1" (at 70.485 36.83 0)
       (effects (font (size 1.27 1.27)))
     )
-    (property "Value" "USB2.0 C 12Pin Receptable" (at 70.485 39.37 0)
+    (property "Value" "GCT USB4510-03-1-A" (at 70.485 39.37 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Footprint" "$74th:USB-C-12-Pin-MidMount-ali-v5-12Pin" (at 72.39 81.28 0)
