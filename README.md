@@ -2,7 +2,7 @@
 
 12 時間後とに USB 電源をオン/オフするためのアダプタ
 
-<img src="./image/photo1.jpg" width="400"><img src="./image/photo2.jpg" width="400">
+<img src="./images/photo1.jpg" width="400"><img src="./images/photo2.jpg" width="400">
 
 ## features
 
