@@ -20,7 +20,7 @@
 
 ## Documents
 
-- semantics: [kicanvas](https://kicanvas.org/?github=https%3A%2F%2Fgithub.com%2F74th%2Fusb-rebooter%2Fblob%2Fv1.0.0%2Fpcb%2Fusb_auto_reboot.kicad_sch)
+- semantics: [PDF](./documents/usb_rebooter-semantics-v1.0.0.pdf), [kicanvas](https://kicanvas.org/?github=https%3A%2F%2Fgithub.com%2F74th%2Fusb-rebooter%2Fblob%2Fv1.0.0%2Fpcb%2Fusb_auto_reboot.kicad_sch)
 - pcb: [kicanvas](https://kicanvas.org/?github=https%3A%2F%2Fgithub.com%2F74th%2Fusb-rebooter%2Fblob%2Fv1.0.0%2Fpcb%2Fusb_auto_reboot.kicad_pcb)
 
 ## parts list
